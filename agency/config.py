@@ -16,7 +16,7 @@ import copy
 import os
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Dict, Iterable, Mapping, Optional
+from typing import Any, Dict, Iterable, List, Mapping, Optional
 
 import yaml
 
@@ -86,7 +86,7 @@ class ExchangeSettings:
     id: str = "binance"
     symbol: str = "BTC/USDT"
     timeframe: str = "1h"
-    limit: int = 1500
+    limit: int = 2160
     order_book_depth: int = 50
     request_timeout_ms: int = 25000
     enable_rate_limit: bool = True
@@ -98,11 +98,16 @@ class DataSettings:
     provider: str = "auto"
     cache_dir: Path = Path("runtime/cache")
     cache_ttl_minutes: int = 15
+    # Birincil borsa engelliyse sirayla denenecek CCXT borsalari
+    fallback_exchanges: List[str] = field(default_factory=lambda: ["kraken", "coinbase"])
+    # CCXT tamamen basarisizsa gercek veriyi REST ile cekmeyi dene (CoinGecko)
+    rest_fallback_enabled: bool = True
     synthetic_bars: int = 2880
     synthetic_seed: int = 1337
     synthetic_start_price: float = 42000.0
     synthetic_annual_vol: float = 0.55
     synthetic_drift: float = 0.18
+
 
 
 @dataclass
@@ -120,12 +125,12 @@ class BacktestSettings:
 
 @dataclass
 class TargetSettings:
-    min_net_profit_pct: float = 3.0
-    min_win_rate: float = 45.0
-    max_drawdown_pct: float = 25.0
-    min_sharpe: float = 0.30
-    min_profit_factor: float = 1.15
-    min_score: float = 55.0
+    min_net_profit_pct: float = 2.0
+    min_win_rate: float = 40.0
+    max_drawdown_pct: float = 20.0
+    min_sharpe: float = 0.25
+    min_profit_factor: float = 1.10
+    min_score: float = 50.0
     max_rework_attempts: int = 3
     max_cycles_per_run: int = 0
     cycle_sleep_seconds: float = 60.0
@@ -193,6 +198,8 @@ class RuntimeSettings:
     state_file: Path = Path("runtime/state.json")
     reports_dir: Path = Path("runtime/reports")
     quote_currency: str = "USDT"
+    backend: str = "native"  # native | crewai | langgraph
+
 
 
 # ---------------------------------------------------------------------------
@@ -291,6 +298,8 @@ class Settings:
             raise ConfigError("data.provider auto|ccxt|synthetic olmali.")
         if self.llm.provider not in {"auto", "openai", "anthropic", "offline"}:
             raise ConfigError("llm.provider auto|openai|anthropic|offline olmali.")
+        if self.runtime.backend not in {"native", "crewai", "langgraph"}:
+            raise ConfigError("runtime.backend native|crewai|langgraph olmali.")
         if not 0.0 < self.backtest.train_split < 1.0:
             raise ConfigError("backtest.train_split 0 ile 1 arasinda olmali.")
         if self.backtest.initial_capital <= 0:

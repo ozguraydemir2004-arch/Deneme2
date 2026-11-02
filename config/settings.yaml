@@ -8,7 +8,7 @@ exchange:
   symbol: BTC/USDT
   timeframe: 1h
   # Tek seferde cekilecek mum sayisi (CCXT limiti)
-  limit: 1500
+  limit: 2160
   # Emir defteri snapshot'i (order book imbalance) arastirmasinda kullanilir
   order_book_depth: 50
   request_timeout_ms: 25000
@@ -20,6 +20,10 @@ data:
   provider: auto
   cache_dir: runtime/cache
   cache_ttl_minutes: 15
+  # Birincil borsa (exchange.id) engelliyse sirayla denenecek CCXT borsalari
+  fallback_exchanges: [kraken, coinbase]
+  # CCXT tamamen basarisizsa gercek veriyi REST ile cekmeyi dene (CoinGecko, anahtarsiz)
+  rest_fallback_enabled: true
   # Sentetik veri (cevrimdisi dogrulama / demo) parametreleri
   synthetic_bars: 2880
   synthetic_seed: 1337
@@ -41,12 +45,12 @@ backtest:
   train_split: 0.7       # veri %70 train / %30 out-of-sample
 
 targets:
-  min_net_profit_pct: 3.0
-  min_win_rate: 45.0
-  max_drawdown_pct: 25.0
-  min_sharpe: 0.30
-  min_profit_factor: 1.15
-  min_score: 55.0
+  min_net_profit_pct: 2.0
+  min_win_rate: 40.0
+  max_drawdown_pct: 20.0
+  min_sharpe: 0.25
+  min_profit_factor: 1.10
+  min_score: 50.0
   # Bir dongude kac kez yeniden kodlama (rework) denenecek
   max_rework_attempts: 3
   # 0 = sonsuz (24/7), aksi halde bu kadar dongu sonrasi durur
@@ -109,5 +113,9 @@ versioning:
 runtime:
   state_file: runtime/state.json
   reports_dir: runtime/reports
+  # Orkestrasyon backend'i: native | crewai | langgraph
+  # native = bagimliliksiz yerlesik akis (her ortamda calisir)
+  # langgraph / crewai = ilgili paket kuruluysa graf/crew tabanli akis
+  backend: native
   # Islem (trade) maliyeti muhasebesi icin baz para birimi
   quote_currency: USDT

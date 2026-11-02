@@ -177,8 +177,14 @@ def build_market_context(
     last_features = feature_dict(features.iloc[-1])
     regime, trend_strength, vol_regime = classify_regime(last_features)
 
+    close_series = frame["close"].astype(float)
+    ema_fast_value = float(ema(close_series, 20).iloc[-1])
+    ema_slow_value = float(ema(close_series, 50).iloc[-1])
+
     lookback = min(len(frame) - 1, 100)
-    reference_price = float(frame["close"].iloc[-1 - lookback]) if lookback > 0 else float(frame["close"].iloc[0])
+    reference_price = (
+        float(frame["close"].iloc[-1 - lookback]) if lookback > 0 else float(frame["close"].iloc[0])
+    )
     last_price = float(frame["close"].iloc[-1])
     price_change = (last_price / reference_price - 1.0) * 100.0 if reference_price else 0.0
 
@@ -196,8 +202,8 @@ def build_market_context(
         atr_pct=last_features.get("atr_pct", 0.0),
         rsi=last_features.get("rsi", 50.0),
         adx=last_features.get("adx", 0.0),
-        ema_fast=float(frame["close"].iloc[-1]) if "close" in frame else 0.0,
-        ema_slow=float(last_features.get("dist_ema_slow_pct", 0.0)),
+        ema_fast=ema_fast_value,
+        ema_slow=ema_slow_value,
         volume_ratio=last_features.get("rel_volume", 1.0),
         regime=regime,
         trend_strength=trend_strength,

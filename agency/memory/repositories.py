@@ -506,6 +506,15 @@ class MemoryStore:
         ).fetchall()
         return [str(r["directive"]) for r in rows]
 
+    def lessons_for_cycle(self, cycle: int, limit: int = 20) -> List[Dict[str, Any]]:
+        rows = self.conn.execute(
+            "SELECT cycle, scope, grade, message, directive, source_version "
+            "FROM lessons WHERE cycle=? ORDER BY id ASC LIMIT ?",
+            (int(cycle), int(limit)),
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+
 
     # ---------------------------------------------------------------- memory
     def promote_strategy(

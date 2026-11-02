@@ -1,0 +1,86 @@
+{
+  "version": 1,
+  "description": "Kripto kantitatif strateji bilgi tabani. Research Agent bu kaliplari LLM prompt'una ve deterministik planlayiciya besler. Her desen, literaturde ve pratikte sik kullanilan bir yaklasimi ozetler; parametreler piyasa rejimine gore uyarlanmalidir.",
+  "patterns": [
+    {
+      "name": "ema_cross_with_adx_regime_filter",
+      "family": "trend_following",
+      "idea": "Hizli/yavas EMA kesisimi trend girisidir; ADX 18-25 uzeri oldugunda calisir, yatay piyasada whipsaw uretir. RSI ust siniri (65-70) gec alimlari engeller.",
+      "indicators": ["ema", "adx", "rsi"],
+      "regimes": ["trend_up", "trend_down"],
+      "risk_note": "ATR tabanli stop (1.5-2.5 ATR) + trailing stop trend boyunca kullanilir."
+    },
+    {
+      "name": "bollinger_mean_reversion",
+      "family": "mean_reversion",
+      "idea": "Fiyat alt Bollinger bandina degdiginde ve RSI 30-35 altinda ise ortalamaya donus beklenir. ADX < 22 filtresi guclu trendlerde islem almayi engeller.",
+      "indicators": ["bbands", "rsi", "adx"],
+      "regimes": ["range", "oversold_range"],
+      "risk_note": "Zaman stopu (24-48 bar) kritik; trend piyasasinda stop hizli tetiklenir."
+    },
+    {
+      "name": "donchian_volume_breakout",
+      "family": "breakout",
+      "idea": "N barlik kanal kirilimi + hacim ortalamanin 1.2x uzeri oldugunda gercek breakout olasiligi artar. Trailing stop ile trend tasinir.",
+      "indicators": ["donchian", "rel_volume", "adx"],
+      "regimes": ["trend_up", "volatile", "squeeze"],
+      "risk_note": "Breakout basarisizliklarinda hizli cikis icin stop 1.5-2 ATR, cooldown 2-5 bar."
+    },
+    {
+      "name": "macd_histogram_momentum",
+      "family": "momentum",
+      "idea": "MACD histograminin sifiri yukari kesmesi + ROC pozitif esik, momentumun erken evresini yakalar. EMA200/EMA100 uzerinde olmak trend filtresidir.",
+      "indicators": ["macd", "roc", "ema", "rel_volume"],
+      "regimes": ["trend_up", "volatile"],
+      "risk_note": "Momentum stratejilerinde risk %0.75-1.5; TP 2-3 ATR."
+    },
+    {
+      "name": "volatility_squeeze_breakout",
+      "family": "volatility_compression",
+      "idea": "Bollinger bant genisligi sikistiginda (dusuk volatilite rejimi) enerji birikir; kanal kirilimi patlamayi yakalar.",
+      "indicators": ["bbands", "donchian", "atr_pct"],
+      "regimes": ["squeeze", "range"],
+      "risk_note": "Sikisma ne kadar uzun surerse patlama o kadar sert olur; stop 1.5-2 ATR."
+    },
+    {
+      "name": "trend_pullback_rsi",
+      "family": "hybrid",
+      "idea": "EMA50 > EMA200 trendinde RSI 40-50 uzerine donerken alim yapmak, trend takibinin daha iyi girisli versiyonudur.",
+      "indicators": ["ema", "rsi", "rel_volume"],
+      "regimes": ["trend_up"],
+      "risk_note": "Trend bozulursa (close < EMA50) hizli cikis."
+    },
+    {
+      "name": "atr_regime_position_sizing",
+      "family": "risk",
+      "idea": "Pozisyon buyuklugu ATR'ye gore olceklenmeli: yuksek volatilitede kucuk, dusuk volatilitede buyuk. Sabit lot kullanimi drawdown'u sisirir.",
+      "indicators": ["atr"],
+      "regimes": ["volatile", "normal"],
+      "risk_note": "Islem basina risk %0.5-2 araliginda tutulmali; ardisik 3 kayipta risk yarilanmali."
+    },
+    {
+      "name": "session_and_cooldown",
+      "family": "risk",
+      "idea": "Ardisik islemler (overtrading) komisyon ve kayma nedeniyle getiriyi yer. Cooldown barlari ve minimum bar araligi eklemek net karı artirir.",
+      "indicators": ["atr", "rel_volume"],
+      "regimes": ["range", "squeeze"],
+      "risk_note": "Cooldown 2-6 bar; gunluk islem limiti 3-5."
+    },
+    {
+      "name": "trend_vs_range_switching",
+      "family": "hybrid",
+      "idea": "ADX > 25 ise trend takibi, ADX < 20 ise ortalama donusu stratejisi kullanmak rejim uyumunu artirir.",
+      "indicators": ["adx", "bbands", "ema"],
+      "regimes": ["trend_up", "range"],
+      "risk_note": "Rejim degisiminde pozisyon kapatilir; strateji secimi her dongude guncellenir."
+    },
+    {
+      "name": "stop_loss_discipline",
+      "family": "risk",
+      "idea": "Stop-loss mesafesi cok dar ise normal gurultude kesilir (dusuk win rate), cok genis ise drawdown buyur. 1.5-2.5 ATR bandi ampirik olarak dengelidir.",
+      "indicators": ["atr"],
+      "regimes": ["volatile", "normal", "trend_up", "trend_down"],
+      "risk_note": "Backtest'te stop mesafesi ile win rate ters iliskilidir; ikisini birlikte optimize et."
+    }
+  ]
+}

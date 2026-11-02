@@ -201,16 +201,11 @@ class BacktestEngine:
                 continue
 
             # --- acik pozisyon yonetimi -----------------------------------
+            # ONEMLI: Once bu barin acilisinda GECERLI olan stop/TP ile cikis
+            # kontrolu yapilir. Trailing stop ancak bundan SONRA, bu barin
+            # high/low'u ile guncellenir (aksi halde ayni barin high'i ile stop
+            # yukseltilip ayni barin low'u ile tetiklenir = ileriye bakma).
             if position is not None:
-                position.bars_held = index - position.entry_index
-                position.highest_price = max(position.highest_price, float(high[index]))
-                position.lowest_price = min(position.lowest_price, float(low[index]))
-                if strategy.risk.trailing_stop_atr > 0:
-                    atr_value = safe_float(row.get("atr"), 0.0)
-                    if atr_value > 0:
-                        trailed = position.highest_price - atr_value * strategy.risk.trailing_stop_atr
-                        position.stop_price = max(position.stop_price, trailed)
-
                 exit_reason = None
                 exit_price = price
                 if float(low[index]) <= position.stop_price:
@@ -221,13 +216,22 @@ class BacktestEngine:
                     exit_price = max(position.take_profit_price, float(open_prices[index]))
                 elif (
                     strategy.risk.max_holding_bars
-                    and position.bars_held >= strategy.risk.max_holding_bars
+                    and (index - position.entry_index) >= strategy.risk.max_holding_bars
                 ):
                     exit_reason = "max_holding"
                     exit_price = price
-
                 if exit_reason:
                     close_position(index, exit_price, exit_reason)
+
+            if position is not None:
+                position.bars_held = index - position.entry_index
+                position.highest_price = max(position.highest_price, float(high[index]))
+                position.lowest_price = min(position.lowest_price, float(low[index]))
+                if strategy.risk.trailing_stop_atr > 0:
+                    atr_value = safe_float(row.get("atr"), 0.0)
+                    if atr_value > 0:
+                        trailed = position.highest_price - atr_value * strategy.risk.trailing_stop_atr
+                        position.stop_price = max(position.stop_price, trailed)
 
             # --- sinyal uretimi -------------------------------------------
             try:

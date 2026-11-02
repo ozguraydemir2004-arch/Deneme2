@@ -101,10 +101,20 @@ def _format_number(value: float) -> str:
 
 
 def _operand(name: str, row_var: str) -> str:
-    """Kural operandini Python ifadesine cevirir."""
+    """Kural operandini Python ifadesine cevirir.
+
+    ``"<kolon>_prev"`` bicimi onceki barin degerini kullanir (orn. sikisma
+    filtresinin breakout barindan once kontrol edilmesi).
+    """
     if isinstance(name, (int, float)) and not isinstance(name, bool):
         return _format_number(float(name))
     text = str(name)
+    if text.endswith("_prev") and len(text) > 5:
+        base = text[: -len("_prev")]
+        target_var = "prev" if row_var == "row" else row_var
+        if base in RAW_COLUMNS:
+            return f'{target_var}["{base}"]'
+        return f'{target_var}["{base}"]'
     if text in RAW_COLUMNS:
         return f'{row_var}["{text}"]'
     if text in CONSTANTS:

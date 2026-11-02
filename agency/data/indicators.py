@@ -157,9 +157,16 @@ def rolling_vwap(high: pd.Series, low: pd.Series, close: pd.Series, volume: pd.S
 
 
 def donchian(high: pd.Series, low: pd.Series, period: int = 20) -> Dict[str, pd.Series]:
+    """Onceki N barin en yuksek/en dusuk seviyesi (kanal).
+
+    ONEMLI: Kanal, **icinde bulunulan bar haric** hesaplanir (``shift(1)``).
+    Aksi halde ``close > upper`` kosulu matematiksel olarak imkansiz olur
+    (bar'in kendi high degeri kanalin icine girer) - klasik ileriye bakma
+    (look-ahead) hatasi.
+    """
     window = int(period)
-    upper = high.rolling(window=window, min_periods=window).max()
-    lower = low.rolling(window=window, min_periods=window).min()
+    upper = high.rolling(window=window, min_periods=window).max().shift(1)
+    lower = low.rolling(window=window, min_periods=window).min().shift(1)
     mid = (upper + lower) / 2.0
     return {"upper": upper, "lower": lower, "mid": mid}
 

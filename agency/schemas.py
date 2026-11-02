@@ -199,8 +199,10 @@ class StrategySpec:
 
     # -- dogrulama ----------------------------------------------------------
     def allowed_operands(self) -> List[str]:
-        names = [ind.key for ind in self.indicators]
-        return list(dict.fromkeys(names + RAW_OPERANDS + list(CONSTANT_OPERANDS)))
+        names = [ind.key for ind in self.indicators] + list(RAW_OPERANDS)
+        # "<operand>_prev" -> onceki bar degeri (kesisim/filtre gecikmesi)
+        prev_names = [f"{name}_prev" for name in names]
+        return list(dict.fromkeys(names + prev_names + list(CONSTANT_OPERANDS)))
 
     def validate(self) -> List[str]:
         errors: List[str] = []
@@ -662,6 +664,7 @@ class BacktestReport:
     split: str = "full"
     metrics: BacktestMetrics = field(default_factory=BacktestMetrics)
     oos_metrics: Optional[BacktestMetrics] = None
+    fold_metrics: List[BacktestMetrics] = field(default_factory=list)
     errors: ErrorMatrix = field(default_factory=ErrorMatrix)
     runtime_seconds: float = 0.0
     equity_curve: List[List[Any]] = field(default_factory=list)
@@ -684,6 +687,7 @@ class BacktestReport:
             "split": self.split,
             "metrics": self.metrics.to_dict(),
             "oos_metrics": self.oos_metrics.to_dict() if self.oos_metrics else None,
+            "fold_metrics": [m.to_dict() for m in self.fold_metrics],
             "errors": self.errors.to_dict(),
             "runtime_seconds": round(self.runtime_seconds, 3),
             "equity_curve": _jsonable(self.equity_curve),
@@ -705,6 +709,9 @@ class BacktestReport:
             split=str(data.get("split", "full")),
             metrics=BacktestMetrics.from_dict(data.get("metrics") or {}),
             oos_metrics=BacktestMetrics.from_dict(oos) if oos else None,
+            fold_metrics=[
+                BacktestMetrics.from_dict(item) for item in (data.get("fold_metrics") or [])
+            ],
             errors=ErrorMatrix.from_dict(data.get("errors") or {}),
             runtime_seconds=float(data.get("runtime_seconds") or 0.0),
             equity_curve=list(data.get("equity_curve") or []),
