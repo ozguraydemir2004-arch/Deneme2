@@ -1,0 +1,38 @@
+# Runtime state -------------------------------------------------------------
+runtime/
+!runtime/.gitkeep
+*.db
+*.db-wal
+*.db-shm
+*.log
+*.jsonl
+
+# Generated strategy versions are runtime artefacts (archived in DB + git tags
+# are used for release snapshots). Keep the package marker only.
+agency/strategies/library/*.py
+!agency/strategies/library/__init__.py
+
+# Python -------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Secrets ------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+
+# Editors ------------------------------------------------------------------
+.idea/
+.vscode/
+.DS_Store

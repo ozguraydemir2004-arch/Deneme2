@@ -1,0 +1,27 @@
+# ---------------------------------------------------------------------------
+# Kripto Al-Sat Botu Gelistirme Ajans Sistemi - cekirdek bagimliliklar
+# ---------------------------------------------------------------------------
+# NOT: Cekirdek calisma zamani (native backend) yalnizca asagidaki 5 paketi
+# gerektirir. CrewAI / LangGraph adaptorleri opsiyoneldir (extras bolumune bak).
+pandas>=2.1,<3.0
+numpy>=1.26,<3.0
+ccxt>=4.2,<5.0
+PyYAML>=6.0
+pydantic>=2.6,<3.0
+
+# --- Test ------------------------------------------------------------------
+pytest>=8.0
+pytest-timeout>=2.3
+
+# --- Opsiyonel LLM saglayicilari (yalnizca ihtiyac halinde kurun) ----------
+# openai>=1.40
+# anthropic>=0.34
+# langchain-openai>=0.2
+# langchain-anthropic>=0.2
+
+# --- Opsiyonel orkestrasyon backend'leri ----------------------------------
+# CrewAI backend:  pip install ".[crewai]"
+# LangGraph backend: pip install ".[langgraph]"
+# crewai>=0.80
+# crewai-tools>=0.20
+# langgraph>=0.2
