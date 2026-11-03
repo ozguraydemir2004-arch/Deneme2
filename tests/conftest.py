@@ -84,6 +84,42 @@ def registry(settings: Settings) -> StrategyRegistry:
 
 
 @pytest.fixture()
+def agent_context(settings: Settings, memory: MemoryStore, registry: StrategyRegistry):
+    from agency.agents.base import AgentContext
+    from agency.agents.planner import StrategyPlanner
+    from agency.data.market_data import MarketDataProvider
+    from agency.llm import build_llm
+    from agency.logging_utils import build_logger
+
+    logger = build_logger(settings.logging.dir, console=False, run_id="test")
+    context = AgentContext(
+        settings=settings,
+        memory=memory,
+        logger=logger,
+        llm=build_llm(settings),
+        registry=registry,
+        data_provider=MarketDataProvider(settings),
+        planner=StrategyPlanner(settings),
+        cycle=1,
+        run_id="test",
+    )
+    yield context
+    context.data_provider.close()
+
+
+@pytest.fixture()
+def config_file(settings: Settings, tmp_path: Path) -> Path:
+    import yaml
+
+    path = tmp_path / "settings.yaml"
+    path.write_text(
+        yaml.safe_dump(settings.as_dict(relative=False), sort_keys=False), encoding="utf-8"
+    )
+    return path
+
+
+
+@pytest.fixture()
 def sample_spec() -> StrategySpec:
     return StrategySpec.from_dict(
         {

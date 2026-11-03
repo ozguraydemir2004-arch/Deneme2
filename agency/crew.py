@@ -73,11 +73,12 @@ AGENT_ROLES = (
 
 
 def crewai_available() -> bool:
-    try:
-        import crewai  # noqa: F401
+    """Paket kurulu mu? (import etmeden kontrol - yan etkisiz)"""
+    import importlib.util
 
-        return True
-    except Exception:  # pragma: no cover - kurulum eksikligi
+    try:
+        return importlib.util.find_spec("crewai") is not None
+    except (ImportError, ValueError):  # pragma: no cover - bozuk kurulum
         return False
 
 

@@ -1,5 +1,5 @@
 # Runtime state -------------------------------------------------------------
-runtime/
+runtime/*
 !runtime/.gitkeep
 *.db
 *.db-wal

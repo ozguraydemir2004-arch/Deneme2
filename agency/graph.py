@@ -45,12 +45,15 @@ class CycleState(TypedDict, total=False):
 
 
 def langgraph_available() -> bool:
-    try:
-        import langgraph  # noqa: F401
-        from langgraph.graph import StateGraph  # noqa: F401
+    """Paket kurulu mu? (import etmeden kontrol - yan etkisiz)"""
+    import importlib.util
 
-        return True
-    except Exception:  # pragma: no cover - kurulum eksikligi
+    try:
+        return (
+            importlib.util.find_spec("langgraph") is not None
+            and importlib.util.find_spec("langgraph.graph") is not None
+        )
+    except (ImportError, ValueError):  # pragma: no cover - bozuk kurulum
         return False
 
 

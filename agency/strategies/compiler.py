@@ -18,7 +18,6 @@ from __future__ import annotations
 import json
 from typing import Any, Dict, List, Sequence, Set
 
-from agency.data.indicators import INDICATOR_KINDS
 from agency.schemas import Rule, StrategySpec
 from agency.utils import slugify
 
@@ -206,11 +205,6 @@ def _indicator_lines(spec: StrategySpec) -> tuple[List[str], Set[str]]:
     return lines, imports
 
 
-def _import_line(functions: Set[str]) -> str:
-    names = sorted(FUNCTION_IMPORTS[name] for name in functions if name in FUNCTION_IMPORTS)
-    return "from agency.data.indicators import " + ", ".join(names)
-
-
 def compile_strategy(
     spec: StrategySpec,
     *,
@@ -243,7 +237,7 @@ def compile_strategy(
         f'            "{k}": {_format_number(float(v))},' for k, v in risk_defaults.items()
     )
     risk_lines += '\n            "allow_short": False,'
-    note_text = "\n".join(f"#   - {_clean(note)}" for note in notes if note)
+    note_text = "\n".join(f"#   - {_clean(note)}" for note in dict.fromkeys(notes) if note)
     thesis = _clean(spec.thesis or "")
     summary = _clean(spec.describe())
 

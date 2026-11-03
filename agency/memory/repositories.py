@@ -483,11 +483,20 @@ class MemoryStore:
         grade: str = "info",
         source_version: Optional[str] = None,
     ) -> None:
+        """Ders kaydi ekler; ayni dongude birebir ayni kayit tekrarlanmaz."""
+        message = str(message)
         with transaction(self.conn) as conn:
+            existing = conn.execute(
+                "SELECT id FROM lessons WHERE cycle=? AND scope=? AND message=? "
+                "AND COALESCE(directive,'')=COALESCE(?,'') LIMIT 1",
+                (int(cycle), scope, message, directive),
+            ).fetchone()
+            if existing:
+                return
             conn.execute(
                 "INSERT INTO lessons (cycle, scope, grade, message, directive, source_version, created_at) "
                 "VALUES (?,?,?,?,?,?,?)",
-                (int(cycle), scope, grade, str(message), directive, source_version, iso_now()),
+                (int(cycle), scope, grade, message, directive, source_version, iso_now()),
             )
 
     def recent_lessons(self, limit: int = 12) -> List[Dict[str, Any]]:
@@ -499,9 +508,11 @@ class MemoryStore:
         return [dict(r) for r in rows]
 
     def pending_directives(self, limit: int = 8) -> List[str]:
+        """En guncel benzersiz direktifler (tekrarlar ayiklanir)."""
         rows = self.conn.execute(
-            "SELECT directive FROM lessons WHERE directive IS NOT NULL AND directive <> '' "
-            "ORDER BY id DESC LIMIT ?",
+            "SELECT directive, MAX(id) AS last_id FROM lessons "
+            "WHERE directive IS NOT NULL AND directive <> '' "
+            "GROUP BY directive ORDER BY last_id DESC LIMIT ?",
             (int(limit),),
         ).fetchall()
         return [str(r["directive"]) for r in rows]

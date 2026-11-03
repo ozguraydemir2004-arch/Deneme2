@@ -338,16 +338,18 @@ class Settings:
         data = asdict(self)
         data.pop("project_root", None)
         data.pop("source_path", None)
-        if relative:
-            for section in data.values():
-                if not isinstance(section, dict):
-                    continue
-                for key, value in list(section.items()):
-                    if isinstance(value, Path):
+        for section in data.values():
+            if not isinstance(section, dict):
+                continue
+            for key, value in list(section.items()):
+                if isinstance(value, Path):
+                    if relative:
                         try:
                             section[key] = str(value.relative_to(self.project_root))
                         except ValueError:
                             section[key] = str(value)
+                    else:
+                        section[key] = str(value)
         return data
 
 

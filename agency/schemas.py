@@ -11,7 +11,7 @@ Bu semalar tum ajanlarin ortak dilidir:
 from __future__ import annotations
 
 import json
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Mapping, Optional, Sequence
 
 from agency.data.indicators import CONSTANT_OPERANDS, INDICATOR_KINDS, RAW_OPERANDS

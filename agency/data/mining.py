@@ -244,6 +244,7 @@ def mine_snapshots(
     returns = forward_returns(frame, horizon)
     min_gap = max(1, int(horizon) // 2)
     snapshots: List[Dict[str, Any]] = []
+    taken: List[int] = []
 
     for label, threshold, reverse in (
         ("winner", float(winner_threshold_pct), True),
@@ -258,7 +259,7 @@ def mine_snapshots(
             continue
         ordered = sorted(indices, key=lambda i: returns.iloc[i], reverse=reverse)
 
-        taken: List[int] = []
+        label_taken = 0
         for idx in ordered:
             if any(abs(idx - other) < min_gap for other in taken):
                 continue
@@ -278,7 +279,8 @@ def mine_snapshots(
                 entry["vector"] = vectorizer.embed_dict(payload)
             snapshots.append(entry)
             taken.append(idx)
-            if len(taken) >= max_snapshots:
+            label_taken += 1
+            if label_taken >= max_snapshots:
                 break
 
     snapshots.sort(key=lambda item: item["bar_index"])

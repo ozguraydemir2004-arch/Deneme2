@@ -89,10 +89,14 @@ def test_macd_hist_relation(series: pd.Series) -> None:
 
 
 def test_bollinger_ordering(series: pd.Series) -> None:
-    bands = bollinger(series, 20, 2.0).dropna()
-    assert (bands["upper"] >= bands["middle"]).all()
-    assert (bands["middle"] >= bands["lower"]).all()
-    assert bands["pctb"].between(-0.5, 1.5).all()
+    bands = bollinger(series, 20, 2.0)
+    upper = bands["upper"].dropna()
+    middle = bands["middle"].dropna()
+    lower = bands["lower"].dropna()
+    assert not upper.empty
+    assert (upper >= middle).all()
+    assert (middle >= lower).all()
+    assert bands["pctb"].dropna().between(-0.5, 1.5).all()
 
 
 def test_roc_and_stochastic(ohlcv: pd.DataFrame) -> None:
@@ -109,14 +113,20 @@ def test_volume_sma(ohlcv: pd.DataFrame) -> None:
 def test_donchian_has_no_lookahead(ohlcv: pd.DataFrame) -> None:
     """Kanal, mevcut bari DISLAMALI (shift(1)) - look-ahead regresyon testi."""
     period = 20
-    channel = donchian(ohlcv["high"], ohlcv["low"], period)
     index = 50
+    channel = donchian(ohlcv["high"], ohlcv["low"], period)
     expected_upper = ohlcv["high"].iloc[index - period : index].max()
     expected_lower = ohlcv["low"].iloc[index - period : index].min()
     assert channel["upper"].iloc[index] == pytest.approx(expected_upper)
     assert channel["lower"].iloc[index] == pytest.approx(expected_lower)
-    # Kanal ust bandi, ayni barin high degerinden kucuk veya esit olmali
-    assert channel["upper"].iloc[index] <= ohlcv["high"].iloc[index]
+
+    # Mevcut barin high degerini yapay olarak sisir: kanal DEGISMEMELI
+    mutated = ohlcv.copy()
+    mutated.loc[index, "high"] = mutated["high"].iloc[index] * 10
+    mutated.loc[index, "low"] = mutated["low"].iloc[index] / 10
+    mutated_channel = donchian(mutated["high"], mutated["low"], period)
+    assert mutated_channel["upper"].iloc[index] == pytest.approx(expected_upper)
+    assert mutated_channel["lower"].iloc[index] == pytest.approx(expected_lower)
 
 
 def test_compute_features_columns(ohlcv: pd.DataFrame) -> None:

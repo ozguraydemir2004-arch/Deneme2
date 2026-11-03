@@ -259,7 +259,7 @@ class AgencyOrchestrator:
         result.finished_at = iso_now()
         result.duration_seconds = round(time.perf_counter() - started, 2)
         lessons = self.memory.lessons_for_cycle(cycle, limit=12)
-        result.lessons = [str(item.get("message")) for item in lessons]
+        result.lessons = list(dict.fromkeys(str(item.get("message")) for item in lessons))
         result.next_directives = self.memory.pending_directives(limit=6)
 
         try:

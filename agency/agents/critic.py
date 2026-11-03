@@ -12,7 +12,7 @@ Gorevi:
 from __future__ import annotations
 
 import math
-from typing import Any, Dict, List, Mapping, Optional, Sequence
+from typing import Any, Dict, List, Mapping, Optional
 
 from agency.agents.base import BaseAgent
 from agency.agents.prompts import CRITIC_SYSTEM, critic_prompt
@@ -342,11 +342,25 @@ class CriticAgent(BaseAgent):
                 self.warn("memory_promote_failed", str(exc))
 
         # Dersler: basarisiz gate'ler + genel karar ozeti
+        metric_keys = {
+            "net_profit": "net_profit_pct",
+            "win_rate": "win_rate",
+            "drawdown": "max_drawdown_pct",
+            "sharpe": "sharpe",
+            "profit_factor": "profit_factor",
+            "trades": "trades",
+            "folds_positive": "fold_positive_count",
+            "folds_mean_positive": "fold_mean_net_pct",
+        }
         for name in [n for n, passed in decision.metric_gates.items() if not passed]:
+            if name.startswith("oos_"):
+                continue  # OOS gate'leri tek tek ders uretmez (gurultu)
+            metric_key = metric_keys.get(name)
+            value = metrics.get(metric_key) if metric_key else None
+            suffix = f" (deger={value})" if value is not None else ""
             self.memory.add_lesson(
                 cycle,
-                f"{build.version} ({build.spec.family}) '{name}' esigini gecemedi "
-                f"(deger={metrics.get(name, metrics.get('net_profit_pct'))})",
+                f"{build.version} ({build.spec.family}) '{name}' esigini gecemedi{suffix}",
                 directive=decision.directives[0] if decision.directives else None,
                 scope="metric",
                 grade="warning",

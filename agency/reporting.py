@@ -129,6 +129,9 @@ class CycleReporter:
             lines.append("")
 
 
+        write_text_atomic(path, "\n".join(lines) + "\n")
+        return path
+
     # --------------------------------------------------------------- index
     def write_index(self, limit: int = 30) -> Path:
         path = self.reports_dir / "INDEX.md"
