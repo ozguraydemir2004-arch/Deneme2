@@ -107,6 +107,17 @@ def test_perturb_always_changes_fingerprint(settings, sample_spec) -> None:
     assert len(seen) >= 4
 
 
+def test_perturb_changes_risk_params(settings, sample_spec) -> None:
+    """Kesif mutasyonu davranisi degistirmeli (sadece isim degil)."""
+    planner = StrategyPlanner(settings)
+    mutated = planner.perturb(sample_spec, attempt=1)
+    assert (mutated.stop_loss_atr, mutated.take_profit_atr) != (
+        sample_spec.stop_loss_atr,
+        sample_spec.take_profit_atr,
+    )
+    assert any("stop x" in note for note in mutated.notes)
+
+
 def test_directives_are_parsed(settings, sample_spec) -> None:
     planner = StrategyPlanner(settings)
     updated = planner.apply_directives(

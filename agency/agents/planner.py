@@ -825,6 +825,19 @@ class StrategyPlanner:
 
         payload["notes"] = notes[-14:]
         self._clamp_payload(payload)
+        # Davranissal degisiklik garantisi: stop/TP her zaman hafifce oynatilir.
+        # (Sadece esik degistirmek, esik hic baglayici degilse ayni metrikleri
+        #  uretebiliyordu -> ogrenme duruyordu.)
+        scale = 1.08 if attempt % 2 else 0.93
+        payload["stop_loss_atr"] = round(
+            clamp(float(payload["stop_loss_atr"]) * scale, 0.5, 6.0), 2
+        )
+        payload["take_profit_atr"] = round(
+            clamp(float(payload["take_profit_atr"]) * (2.0 - scale), 0.4, 12.0), 2
+        )
+        notes.append(f"kesif: stop x{scale}, TP x{round(2.0 - scale, 2)}")
+        payload["notes"] = notes[-14:]
+        self._clamp_payload(payload)
         return StrategySpec.from_dict(payload)
 
 
