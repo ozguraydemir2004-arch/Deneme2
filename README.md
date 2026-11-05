@@ -107,7 +107,7 @@ tekrar olustugunda tohum olarak kullanilir.
 │   │   └── vector_store.py     # Hash-tabanli vektor hafiza
 │   └── knowledge/
 │       └── strategy_playbook.json  # Kanitlanmis kaliplar (bilgi tabani)
-├── tests/                      # 96 test (unit + uctan uca)
+├── tests/                      # 119 test (unit + uctan uca)
 └── runtime/                    # Calisma zamani (git'e girmez)
     ├── agency.db               # SQLite hafiza
     ├── logs/                   # agency-YYYY-MM-DD.log/.jsonl
@@ -245,6 +245,24 @@ Vektor hafiza harici embedding servisi gerektirmez: ozellikler "signed hashing
 trick" ile 256 boyuta izdusurulur, kosinus benzerligi ile en yakin tarihsel
 basari anlari bulunur (`agency/memory/vector_store.py`).
 
+### Strateji bakimi (decay check)
+
+Terfi eden bir strateji, piyasa rejimi degistiginde bozulabilir. Bu yuzden
+kalici hafiza tek yonlu degildir:
+
+```bash
+python main.py validate            # rapor uretir (runtime/reports/REVALIDATION.md)
+python main.py validate --demote   # basarisizlari kalici hafizadan cikarir
+```
+
+- Yeniden dogrulama, promoted stratejileri **guncel veri** uzerinde kosar ve
+  ayni gate tablosuyla degerlendirir (taze pencere kisa oldugu icin islem
+  esigi yarilanir).
+- Basarisiz strateji `--demote` ile `memory_strategies`'ten cikarilir,
+  `status='demoted'` isaretlenir ve `lessons` tablosuna gerekce yazilir.
+  Boylece hafiza yalnizca hala gecerli olan stratejileri tasir.
+- Ciktilar: `runtime/reports/REVALIDATION.md` (tablo + gerekceler).
+
 ---
 
 ## 8. Veri Kaynaklari
@@ -258,7 +276,9 @@ basari anlari bulunur (`agency/memory/vector_store.py`).
 3. **Sentetik**: ag yoksa deterministik, rejim degistiren GBM uretimi
    (test/demo). Bu modda sonuclar gercek piyasa performansi degildir.
 
-Veri kaynagi her raporda ve DB'de acikca yazilir (`data_source`).
+Veri kaynagi her raporda ve DB'de acikca yazilir (`data_source`). Onbellek
+(CSV) bir tasima bicimidir; `.meta.json` yan dosyasi sayesinde kaynak
+(`ccxt:kraken`, `coingecko`, `synthetic`) onbellekten okurken de korunur.
 
 ---
 
@@ -301,6 +321,7 @@ Tum alanlar `AGENCY_*` ortam degiskenleriyle override edilebilir
 | `python main.py run --backend langgraph` | LangGraph state machine |
 | `python main.py once` | Tek dongu |
 | `python main.py status` | DB istatistikleri + skor tablosu |
+| `python main.py validate [--demote]` | Terfi eden stratejileri **guncel veriyle** yeniden dogrula (decay check) |
 | `python main.py doctor` | Paket/anahtar/backend/ortam kontrolu |
 | `--symbol/--timeframe/--data-provider/--llm/--backend` | Tek seferlik override |
 | `--max-runtime 300` | Toplam sure limiti (sn), sonra guvenli durus |
@@ -347,7 +368,7 @@ degistirilir; `MemoryStore` arayuzu ayni kalir.
 ## 13. Test ve Dogrulama
 
 ```bash
-python -m pytest              # 96 test
+python -m pytest              # 119 test
 python -m pytest tests/test_pipeline.py -v   # uctan uca dongu
 ```
 

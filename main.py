@@ -84,6 +84,18 @@ def build_parser() -> argparse.ArgumentParser:
     doctor_parser = subparsers.add_parser("doctor", help="Ortam ve bagimlilik kontrolu")
     add_common(doctor_parser)
 
+    validate_parser = subparsers.add_parser(
+        "validate", help="Terfi eden stratejileri guncel veriyle yeniden dogrula (decay check)"
+    )
+    add_common(validate_parser)
+    validate_parser.add_argument("--limit", type=int, default=10, help="Dogrulanacak strateji sayisi")
+    validate_parser.add_argument("--bars", type=int, default=None, help="Kullanilacak bar sayisi")
+    validate_parser.add_argument(
+        "--demote",
+        action="store_true",
+        help="Basarisiz stratejiyi kalici hafizadan cikar (status=demoted)",
+    )
+
     return parser
 
 
@@ -195,6 +207,43 @@ def _print_summary(orchestrator: AgencyOrchestrator, results: list, backend: str
     print("=" * 78)
 
 
+def cmd_validate(args: argparse.Namespace) -> int:
+    settings = load_settings(args.config, _overrides(args))
+    from agency.maintenance import StrategyMaintenance
+
+    validator = StrategyMaintenance(settings)
+    try:
+        results = validator.revalidate(
+            limit=args.limit, bars=args.bars, demote=bool(args.demote)
+        )
+    finally:
+        validator.close()
+
+    print(f"\nYeniden dogrulama: {len(results)} terfi etmis strateji")
+    if not results:
+        print("Kalici hafizada terfi etmis strateji yok (once 'python main.py run').")
+        return 0
+    print("-" * 78)
+    for item in results:
+        state = "GECTI" if item.ok else ("DEMOTE" if item.demoted else "BASARISIZ")
+        if item.error:
+            state = "HATA"
+        m = item.metrics
+        print(
+            f" {item.version:<6} {item.name[:26]:<26} {state:<10} "
+            f"net={m.net_profit_pct:6.2f}% win={m.win_rate:5.1f}% dd={m.max_drawdown_pct:5.2f}% "
+            f"sharpe={m.sharpe:5.2f} islem={m.trades:3d}"
+        )
+        if item.error:
+            print(f"        hata: {item.error[:120]}")
+    print("-" * 78)
+    demoted = sum(1 for item in results if item.demoted)
+    if demoted:
+        print(f" {demoted} strateji kalici hafizadan cikarildi.")
+    print(f" Rapor: {settings.runtime.reports_dir / 'REVALIDATION.md'}")
+    return 0
+
+
 def cmd_status(args: argparse.Namespace) -> int:
     settings = load_settings(args.config, _overrides(args))
     from agency.memory.database import Database
@@ -280,6 +329,8 @@ def main(argv: Optional[list] = None) -> int:
             return cmd_status(args)
         if command == "doctor":
             return cmd_doctor(args)
+        if command == "validate":
+            return cmd_validate(args)
         parser.print_help()
         return 2
     except ConfigError as exc:

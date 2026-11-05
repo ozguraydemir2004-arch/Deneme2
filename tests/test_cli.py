@@ -45,3 +45,12 @@ def test_invalid_config_returns_two(tmp_path: Path, capsys) -> None:
     code = main(["--config", str(path), "doctor"])
     assert code == 2
     assert "Konfigurasyon hatasi" in capsys.readouterr().err
+
+
+def test_validate_without_promotions(config_file: Path, capsys) -> None:
+    code = main(["--config", str(config_file), "validate"])
+    out = capsys.readouterr().out
+    assert code == 0
+    assert "Yeniden dogrulama" in out
+    assert "terfi etmis strateji yok" in out
+

@@ -26,7 +26,7 @@ import pandas as pd
 
 from agency.config import Settings
 from agency.exceptions import DataError
-from agency.utils import iso_now, utc_now
+from agency.utils import iso_now, read_json, utc_now, write_json
 
 OHLCV_COLUMNS = ["timestamp", "open", "high", "low", "close", "volume"]
 
@@ -122,12 +122,16 @@ class MarketDataProvider:
             age_minutes = (time.time() - cache_path.stat().st_mtime) / 60.0
             if age_minutes <= self.settings.data.cache_ttl_minutes:
                 frame = pd.read_csv(cache_path)
+                meta = read_json(self._cache_meta_path(cache_path), default={}) or {}
+                origin = str(meta.get("source") or "cache")
                 result = MarketDataResult(
                     frame=frame[OHLCV_COLUMNS],
-                    source="cache",
+                    # Gercek kaynak korunur ("cache" yalnizca bir tasima bicimi)
+                    source=origin,
                     symbol=symbol,
                     timeframe=timeframe,
                     cached=True,
+                    warnings=[f"Veri onbellekten okundu ({age_minutes:.1f} dk)"],
                 )
                 self.last_source = result.source
                 return result
@@ -161,7 +165,7 @@ class MarketDataProvider:
                     warnings=warnings,
                 )
                 result.validate()
-                self._write_cache(cache_path, frame)
+                self._write_cache(cache_path, frame, source)
                 self.last_source = source
                 return result
             except Exception as exc:  # ag/kurulum hatalari
@@ -182,7 +186,7 @@ class MarketDataProvider:
                     warnings=warnings,
                 )
                 result.validate()
-                self._write_cache(cache_path, frame)
+                self._write_cache(cache_path, frame, "coingecko")
                 self.last_source = "coingecko"
                 self.last_warnings = warnings
                 return result
@@ -200,7 +204,7 @@ class MarketDataProvider:
             warnings=warnings,
         )
         result.validate()
-        self._write_cache(cache_path, frame)
+        self._write_cache(cache_path, frame, "synthetic")
         self.last_source = "synthetic"
         self.last_warnings = warnings
         return result
@@ -504,12 +508,21 @@ class MarketDataProvider:
         return self.cache_dir / f"{slug}_{timeframe}_{limit}_{mode}.csv"
 
     @staticmethod
-    def _write_cache(path: Path, frame: pd.DataFrame) -> None:
+    def _cache_meta_path(path: Path) -> Path:
+        return path.with_suffix(path.suffix + ".meta.json")
+
+    @classmethod
+    def _write_cache(cls, path: Path, frame: pd.DataFrame, source: str = "unknown") -> None:
+        """CSV + kaynak meta dosyasi yazar (onbellekten okurken kaynak korunur)."""
         try:
             path.parent.mkdir(parents=True, exist_ok=True)
             tmp = path.with_suffix(".tmp")
             frame.to_csv(tmp, index=False)
             tmp.replace(path)
+            write_json(
+                cls._cache_meta_path(path),
+                {"source": source, "bars": int(len(frame)), "written_at": iso_now()},
+            )
         except OSError:  # pragma: no cover - disk sorunu
             pass
 

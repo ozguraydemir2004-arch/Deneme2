@@ -58,15 +58,30 @@ def extract_json(text: str) -> Optional[Dict[str, Any]]:
     except json.JSONDecodeError:
         pass
 
-    # Dengeli parantez taramasi ile ilk nesneyi bul
+    # Dengeli parantez taramasi (string ve kacis karakterlerine saygi duyar)
     depth = 0
     start = -1
+    in_string = False
+    escaped = False
     for index, char in enumerate(cleaned):
+        if in_string:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                in_string = False
+            continue
+        if char == '"':
+            in_string = True
+            continue
         if char == "{":
             if depth == 0:
                 start = index
             depth += 1
         elif char == "}":
+            if depth == 0:
+                continue
             depth -= 1
             if depth == 0 and start >= 0:
                 chunk = cleaned[start : index + 1]
@@ -74,6 +89,7 @@ def extract_json(text: str) -> Optional[Dict[str, Any]]:
                     parsed = json.loads(chunk)
                     return parsed if isinstance(parsed, dict) else None
                 except json.JSONDecodeError:
+                    # Bu blok gecerli JSON degil: taramaya devam et
                     start = -1
     return None
 

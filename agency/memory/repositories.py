@@ -606,6 +606,30 @@ class MemoryStore:
                 (version,),
             )
 
+    def demote_strategy(
+        self,
+        version: str,
+        *,
+        cycle: int,
+        reason: str,
+        source: str = "maintenance",
+    ) -> None:
+        """Stratejiyi kalici hafizadan cikarir ve `demoted` olarak isaretler."""
+        with transaction(self.conn) as conn:
+            conn.execute("DELETE FROM memory_strategies WHERE version=?", (version,))
+            conn.execute(
+                "UPDATE strategy_versions SET status='demoted', updated_at=? WHERE version=?",
+                (iso_now(), version),
+            )
+        self.add_lesson(
+            cycle,
+            f"{version} kalici hafizadan cikarildi: {reason}",
+            scope=source,
+            grade="warning",
+            source_version=version,
+        )
+
+
     # ----------------------------------------------------------------- stats
     def stats(self) -> Dict[str, Any]:
         versions = self.conn.execute(

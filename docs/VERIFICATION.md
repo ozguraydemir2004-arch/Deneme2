@@ -18,7 +18,7 @@ $ echo $?
 $ python -m pytest
 ........................................................................ [ 75%]
 ........................                                                 [100%]
-96 passed in 13.69s
+119 passed in 13.82s
 ```
 
 Kapsam ozeti:
@@ -32,6 +32,8 @@ Kapsam ozeti:
 | Derleyici | `tests/test_compiler.py` | Spec -> OOP kod; AST yasakli cagri/import kontrolu |
 | Ajanlar | `tests/test_planner_coder.py`, `tests/test_critic.py` | Onarim uretir, kesif mutasyonu, terfi/rework/arsiv |
 | Uctan uca | `tests/test_pipeline.py` | Native + LangGraph dongu; dosya, DB ve rapor dogrulamasi |
+| Bakim | `tests/test_maintenance.py`, `tests/test_news_and_cache.py` | Decay check/demote, onbellek kaynak sadakati, haber sentiment |
+| LLM | `tests/test_llm.py` | JSON ayiklama (string icindeki parantezler dahil), istemci secimi |
 
 ## 3. Gercek veriyle dongu (BTC/USDT 1h, 90 gun)
 
@@ -110,7 +112,23 @@ Bu, sistemin "yuksek skor = terfi" gibi naif bir kural kullanmadigini
 gosterir: en guncel gorulmemis pencere ve walk-forward dilimleri birlikte
 degerlendirilir.
 
-## 6. Notlar
+## 6. Strateji bakimi (decay check)
+
+```bash
+$ python main.py validate --limit 3
+Yeniden dogrulama: 1 terfi etmis strateji
+------------------------------------------------------------------------------
+ v020   bb_reversion_24_22_r1_p1   BASARISIZ  net= -6.48% win= 36.7% dd= 6.84% sharpe=-5.14 islem= 30
+------------------------------------------------------------------------------
+ Rapor: runtime/reports/REVALIDATION.md
+```
+
+Sentetik veride terfi eden strateji, gercek veri penceresinde esikleri
+gecemedi ve raporlandi. `--demote` verildiginde kalici hafizadan cikarilir,
+`status='demoted'` isaretlenir ve `lessons` tablosuna gerekce yazilir
+(`tests/test_maintenance.py` bunu dogrular).
+
+## 7. Notlar
 
 - Veri penceresi zamanla kayar; ayni komut farkli dongude farkli sonuclar
   uretebilir (piyasa verisi degisir).
