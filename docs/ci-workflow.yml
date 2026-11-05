@@ -1,3 +1,9 @@
+# CI Workflow sablonu
+#
+# Kullanim: bu dosyayi `.github/workflows/ci.yml` olarak kopyalayin.
+# (GitHub App tokeninda "workflows" izni yoksa dogrudan commit edilemez;
+#  kullanici kendi tokeni ile ekleyebilir.)
+
 name: CI
 
 on:
