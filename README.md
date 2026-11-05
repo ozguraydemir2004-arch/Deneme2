@@ -397,6 +397,9 @@ Toplam: dongu=2 surum=13 terfi=1 snapshot=270 hafiza=1 ders=129
 kalici hafizaya alindi; `runtime/archive/` altinda puanli kopyasi ve
 `runtime/reports/cycle_002/report.md` icinde tam gerekce/direktif listesi var.
 
+CI: `docs/ci-workflow.yml` dosyasini `.github/workflows/ci.yml` olarak
+kopyalayin (pyflakes + pytest).
+
 Ayrintili kanit kaydi (test ciktilari, log alintilari, uretilen kod ornegi):
 [`docs/VERIFICATION.md`](docs/VERIFICATION.md).
 
