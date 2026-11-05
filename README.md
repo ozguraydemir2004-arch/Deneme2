@@ -143,6 +143,12 @@ python main.py run --cycles 2 --sleep 30
 # 6) 24/7 mod (max_cycles_per_run: 0 => sinirsiz; Ctrl+C guvenli cikis)
 python main.py run
 
+# 6b) 24/7 arka plan servisi (onerilen)
+./scripts/agencyctl.sh start --sleep 60   # baslat
+./scripts/agencyctl.sh status            # surec + panel
+./scripts/agencyctl.sh logs              # canli log
+./scripts/agencyctl.sh stop              # graceful durdur
+
 # 7) Durum / pano
 python main.py status
 cat runtime/reports/INDEX.md
